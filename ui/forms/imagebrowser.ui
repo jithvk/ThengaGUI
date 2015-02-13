@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImageBrowser</class>
+ <widget class="QDockWidget" name="ImageBrowser">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>220</width>
+    <height>385</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>220</width>
+    <height>127</height>
+   </size>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::DefaultContextMenu</enum>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../Resources1.qrc">
+    <normaloff>:/icons/res/folder.png</normaloff>:/icons/res/folder.png</iconset>
+  </property>
+  <property name="floating">
+   <bool>false</bool>
+  </property>
+  <property name="features">
+   <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+  </property>
+  <property name="allowedAreas">
+   <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+  </property>
+  <property name="windowTitle">
+   <string>Scenario Runner</string>
+  </property>
+  <widget class="QWidget" name="dockWidgetContents">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTreeView" name="fileTree">
+      <property name="contextMenuPolicy">
+       <enum>Qt::CustomContextMenu</enum>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="animated">
+       <bool>true</bool>
+      </property>
+      <attribute name="headerVisible">
+       <bool>false</bool>
+      </attribute>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <action name="actionDownload">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/download.png</normaloff>:/icons/res/download.png</iconset>
+   </property>
+   <property name="text">
+    <string>Download</string>
+   </property>
+   <property name="toolTip">
+    <string>Download</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/pic.png</normaloff>:/icons/res/pic.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open image in viewer</string>
+   </property>
+  </action>
+  <action name="actionObject_Info">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/info.png</normaloff>:/icons/res/info.png</iconset>
+   </property>
+   <property name="text">
+    <string>Object Info</string>
+   </property>
+  </action>
+  <action name="actionPerform_Download_Test">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/main.png</normaloff>:/icons/res/main.png</iconset>
+   </property>
+   <property name="text">
+    <string>Perform Download Test</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../../Resources1.qrc"/>
+ </resources>
+ <connections/>
+</ui>

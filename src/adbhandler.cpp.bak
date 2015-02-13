@@ -1,0 +1,318 @@
+#include "inc\adbhandler.h"
+
+extern "C" {
+#include "file_sync_service.h"
+#include "fdevent.h"
+#include "adb.h"
+#include "adb_client.h"
+//#include "sysdeps.h"
+
+int  adb_close(int  fd);
+int  adb_read(int  fd, void* buf, int len);
+
+}
+#include "stdint.h"
+
+
+AdbHandler::AdbHandler(QObject *parent) :
+    QObject(parent)
+{
+    _transportType = kTransportAny;
+    _serial = NULL;
+    init();
+
+    m_abortCurrentOp = false;
+
+}
+
+/* getprop ro.build.version.sdk*/
+int AdbHandler::getSdkVersion()
+{
+
+    QString cmd("shell: getprop ro.build.version.sdk");
+
+    int fd = adb_connect((const char *)cmd.toLocal8Bit().data());
+
+    if(fd < 0) {
+        fprintf(stderr,"error: %s\n", adb_error());
+        return -1;
+    }
+
+    QString versionString = readString(fd);
+
+    if(versionString.isEmpty())
+        return -1;
+
+    return versionString.toInt();
+}
+
+QList<AdbDevice> AdbHandler::listDevices()
+{
+
+    char *tmp;    
+    QStringList ret;
+    QList<AdbDevice> deviceList;
+
+    QString buff("host:devices");
+    tmp = adb_query((char*)buff.toLocal8Bit().data());
+    if(tmp) {        
+        ret = QString(tmp).split("\n");
+        free(tmp);
+    }
+    foreach (QString device, ret) {
+        AdbDevice a;
+        if(device.isEmpty())
+            continue;
+        QStringList detail = device.split("\t");
+        a.name = detail.at(0);
+        a.serial = detail.at(1);
+        a.isAuthorised = a.serial.compare("device",Qt::CaseInsensitive)==0;
+        deviceList.append(a);
+    }
+    return deviceList;
+}
+
+void AdbHandler::init()
+{
+    adb_set_transport(_transportType , _serial);
+    adb_set_tcp_specifics(DEFAULT_ADB_PORT);
+}
+
+void AdbHandler::abort()
+{
+    m_abortCurrentOp = true;
+}
+
+
+
+QString AdbHandler::readString(int fd)
+{
+    QString out;
+
+    char buf[128];
+    int len;
+
+
+    while(fd >= 0) {
+
+        len = adb_read(fd, buf, 128);
+        if(len == 0) {
+            break;
+        }
+
+        if(len < 0) {
+            if(errno == EINTR) continue;
+            break;
+        }
+        buf[len] = 0;
+        out.append((const char*) buf);
+    }
+
+    return out;
+
+
+}
+
+
+int AdbHandler::getCpuCount()
+{
+    QString cmd("shell: cat /sys/devices/system/cpu/possible");
+
+    int fd = adb_connect((const char *)cmd.toLocal8Bit().data());
+
+    if(fd < 0) {
+        fprintf(stderr,"error: %s\n", adb_error());
+        return -1;
+    }
+
+    QString out = readString(fd);
+
+
+
+    if(out.isEmpty())
+        return -1;
+
+    if(out.indexOf('-') < 0)
+    {
+        return out.toInt();
+    }
+
+    int len = out.split("-",QString::SkipEmptyParts).at(1).toInt();
+
+    return len+1;
+
+}
+
+QByteArray AdbHandler::getTraceLog(int seconds, bool rooted)
+{
+
+    int version = getSdkVersion();
+    QString atraceCommand;
+    QString workQueuTraceOption;
+    if(version <=17)
+    {
+        atraceCommand = QString("atrace -b 32768 -z -t %1 -s").arg(seconds);
+        workQueuTraceOption = "-w";
+    }
+    else
+    {
+        atraceCommand = QString("atrace -b 32768 -z -t %1 sched").arg(seconds);
+        workQueuTraceOption = "workq";
+    }
+
+    QString cmd;
+    if(rooted)
+        cmd = QString("shell: su -c \"%1 %2\" ").arg(atraceCommand).arg(workQueuTraceOption);
+    else
+        cmd = QString("shell: %1").arg(atraceCommand);
+
+
+//    QString cmd = atraceCommand.arg(seconds);
+    int fd = adb_connect((const char *)cmd.toLocal8Bit().data());
+
+    if(fd < 0) {
+        fprintf(stderr,"error: %s\n", adb_error());
+        return QByteArray();
+    }
+
+    char buf[4096];
+    int len;
+    QByteArray out;
+
+//    QThread::sleep(2);
+
+    while(fd >= 0) {
+
+        len = adb_read(fd, buf, 4096);
+        if(len == 0) {
+            break;
+        }
+
+        if(len < 0) {
+            if(errno == EINTR) continue;
+            break;
+        }
+        out.append(buf,len);
+    }
+
+    return out;
+
+}
+
+QList<FileObject> AdbHandler::getDirListing(QString dirPath)
+{
+    QList<FileObject> list;
+    syncmsg msg;
+    char buf[257];
+    int len;
+    int fd = adb_connect("sync:");
+//    char * path = dirPath.toLocal8Bit().data();
+
+    if(fd < 0) {
+        fprintf(stderr,"error: %s\n", adb_error());
+        return QList<FileObject>();
+    }
+
+
+
+    len = dirPath.size();//strlen(dirPath);//.length();
+//    if(len > 1024) goto fail;
+
+    msg.req.id = ID_LIST;
+    msg.req.namelen = htoll(len);
+
+    if(writex(fd, &msg.req, sizeof(msg.req)) ||
+       writex(fd, dirPath.toLocal8Bit().data(), len)) {
+        adb_close(fd);
+        return list;
+    }
+
+    for(;;) {
+        if(readx(fd, &msg.dent, sizeof(msg.dent))) break;
+        if(msg.dent.id == ID_DONE) break;
+        if(msg.dent.id != ID_DENT) break;
+
+        len = ltohl(msg.dent.namelen);
+        if(len > 256) break;
+
+        if(readx(fd, buf, len)) break;
+        buf[len] = 0;
+
+        /* skip prev and current dir*/
+        if(buf[0] == '.') {
+            if(buf[1] == 0) continue;
+            if((buf[1] == '.') && (buf[2] == 0)) continue;
+        }
+
+        FileObject fo;
+        fo.m_associationType = ltohl(msg.dent.mode);
+        fo.m_fileSize  = ltohl(msg.dent.size);
+        fo.m_fileName=QString(buf);
+
+        /* we use the file name location as id. thats the only thing unique now*/
+        fo.objectID = (uint32_t)(-1) ;
+
+        list.append(fo);
+//        free(fo.objectInfo.Filename);
+    }
+
+    if(msg.dent.id != ID_DONE)
+            adb_close(fd);
+    else
+    {
+        /* quit sync*/
+        syncmsg msg;
+        msg.req.id = ID_QUIT;
+        msg.req.namelen = 0;
+        writex(fd, &msg.req, sizeof(msg.req));
+    }
+
+    return list;
+
+}
+
+bool AdbHandler::isServerRunning()
+{
+    // first query the adb server's version
+    int fd = _adb_connect("host:version");
+    if(fd >= 0)
+    {
+        adb_close(fd);
+        return true;
+    }
+
+    return false;
+
+}
+
+bool AdbHandler::isDeviceConnected()
+{
+    return (listDevices().isEmpty() == false);
+}
+
+void AdbHandler::waitForDevice()
+{
+
+}
+
+void AdbHandler::startAdbServer()
+{
+    launch_server(DEFAULT_ADB_PORT);
+}
+
+bool AdbHandler::killServer()
+{
+    int fd;
+    fd = _adb_connect("host:kill");
+    if(fd == -1) {
+        /* server not running*/
+        return false;
+    }
+    adb_close(fd);
+    return true;
+}
+
+
+
+
+

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AdbFileBrowser</class>
+ <widget class="QWidget" name="AdbFileBrowser">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>658</width>
+    <height>405</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>File Browser</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../Resources1.qrc">
+    <normaloff>:/icons/res/folder.png</normaloff>:/icons/res/folder.png</iconset>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout"/>
+  <action name="actionBack">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/arrow_left.png</normaloff>:/icons/res/arrow_left.png</iconset>
+   </property>
+   <property name="text">
+    <string>Back</string>
+   </property>
+   <property name="toolTip">
+    <string>Go Back to previous folder</string>
+   </property>
+  </action>
+  <action name="actionUp">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/arrow_up.png</normaloff>:/icons/res/arrow_up.png</iconset>
+   </property>
+   <property name="text">
+    <string>Up</string>
+   </property>
+   <property name="toolTip">
+    <string>Go to the parent folder</string>
+   </property>
+  </action>
+  <action name="actionView_List">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/settings.png</normaloff>:/icons/res/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>View List</string>
+   </property>
+  </action>
+  <action name="actionDownload">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/arrow_down.png</normaloff>:/icons/res/arrow_down.png</iconset>
+   </property>
+   <property name="text">
+    <string>Download</string>
+   </property>
+   <property name="toolTip">
+    <string>Download to local machine</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/exit.png</normaloff>:/icons/res/exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionNew_Directory">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/folder.png</normaloff>:/icons/res/folder.png</iconset>
+   </property>
+   <property name="text">
+    <string>New Directory</string>
+   </property>
+  </action>
+  <action name="actionRename">
+   <property name="icon">
+    <iconset resource="../../Resources1.qrc">
+     <normaloff>:/icons/res/file.png</normaloff>:/icons/res/file.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rename</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename File</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../../Resources1.qrc"/>
+ </resources>
+ <connections/>
+</ui>
